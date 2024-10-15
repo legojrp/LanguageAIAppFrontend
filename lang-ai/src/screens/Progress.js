@@ -1,9 +1,7 @@
 // src/screens/Progress.js
-import React, { useState } from 'react';
-import { Box, Heading, Flex, Menu, MenuButton, MenuList, MenuItem, Button, IconButton, Select, Fade, Slide, Collapse} from '@chakra-ui/react';
-import { ChevronDownIcon } from '@chakra-ui/icons';
-import { useSafeAPI } from '../components/fetch';
-
+import React, { useState, useEffect } from 'react';
+import { Box, Heading, Flex, Select, Collapse, Spinner, Text } from '@chakra-ui/react';
+import useSafeAPI from '../components/fetch';
 
 // Top bar with language switcher
 const TopBar = ({ selectedLanguage, setSelectedLanguage }) => {
@@ -29,49 +27,49 @@ const TopBar = ({ selectedLanguage, setSelectedLanguage }) => {
 };
 
 // Island component
-const Island = ({ title, completed, id, lessons = [], show = true, onClick}) => {
+const Island = ({ title, completed, id, lessons = [], show = true, onClick }) => {
   return (
-    <>
     <Flex direction="column" alignItems="center" mb={4} position="relative">
-    <Box onClick={onClick}
-      bg={completed ? 'green.400' : 'gray.300'}
-      borderRadius="md"
-      p={6}
-      textAlign="center"
-      color="white"
-      fontWeight="bold"
-      fontSize="lg"
-      width="500px"
-      height="50px"
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      position="relative"
-      zIndex={1}
-    >
-      {title}
-    </Box>
+      <Box
+        onClick={onClick}
+        bg={completed ? 'green.400' : 'gray.300'}
+        borderRadius="md"
+        p={6}
+        textAlign="center"
+        color="white"
+        fontWeight="bold"
+        fontSize="lg"
+        width="500px"
+        height="50px"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        position="relative"
+        zIndex={1}
+      >
+        {title}
+      </Box>
 
       <Collapse in={show} unmountOnExit>
-        <Flex direction="row" alignItems="center" mb={4} position="relative" justifyContent={"center"}>
-        <VerticalPath isCompleted={completed} height="160px"/>
-        <Box width="20px"/>
+        <Flex direction="row" alignItems="center" mb={4} position="relative" justifyContent="center">
+          <VerticalPath isCompleted={completed} height="160px" />
+          <Box width="20px" />
           <Flex key={id} direction="column" alignItems="flex-start" mb={4} position="relative">
-            {show && lessons.map((lesson) => (
-              <Box key={lesson.id} bg={lesson.completed ? 'green.200' : 'gray.200'} p={2} mt={2}>
-                {"Lesson " + lesson.lesson + " - " + lesson.topic}
-              </Box>
-            ))}
+            {show &&
+              lessons.map((lesson) => (
+                <Box key={lesson.id} bg={lesson.completed ? 'green.200' : 'gray.200'} p={2} mt={2}>
+                  {`Lesson ${lesson.lesson} - ${lesson.topic}`}
+                </Box>
+              ))}
           </Flex>
         </Flex>
       </Collapse>
     </Flex>
-    </>
   );
 };
 
 // Vertical Path connecting islands (like ladder steps)
-const VerticalPath = ({ isCompleted, height}) => (
+const VerticalPath = ({ isCompleted, height }) => (
   <Box
     width="4px"
     height={height || '80px'}
@@ -81,47 +79,27 @@ const VerticalPath = ({ isCompleted, height}) => (
   />
 );
 
-
-
 const Progress = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('english');
   const [activeIsland, setActiveIsland] = useState(null);
-
   const [islandsData, setIslandsData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  useSafeGetSyllabus = useSafeAPI();
+  const safeAPI = useSafeAPI();
+
   const handleRequest = async () => {
-    const response = await useSafeGetSyllabus(
-      `/get_syllabus`,
-      { language: selectedLanguage },
-    );
-    console.log(response);
-    setIslandsData(response.syllabus ?? []);
+    try {
+      const response = await safeAPI('/get_syllabus', { language: selectedLanguage });
+      setIslandsData(JSON.parse(response).syllabus ?? []);
+    } catch (error) {
+      console.error('Failed to fetch syllabus:', error);
+    }
   };
 
-
-
-
-  // const fetchData = async () => {
-  //   try {
-  //     const response = await fetch(`http://localhost:5000/get_syllabus`, {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ language: selectedLanguage }),
-  //     });
-  //     const data = JSON.parse(await response.json());
-
-  //     setIslandsData(data.syllabus ?? []);
-      
-  //     console.log(data);
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-  React.useEffect(() => {
+  useEffect(() => {
     handleRequest();
-  }, []);
+  }, [selectedLanguage]);
 
   return (
     <Box>
@@ -130,18 +108,34 @@ const Progress = () => {
 
       {/* Scrollable Progress Area */}
       <Box p={4} overflowY="scroll" maxHeight="80vh">
-        <Flex direction="column" alignItems="center">
-          {islandsData.map((island, index) => (
-            <Flex key={island.id} direction="column" alignItems="center" mb={4} position="relative">
-              <Island title={"Unit " + island.unit + " - " + island.title} completed={island.completed} id={island.unit} lessons={island.subunits} show={activeIsland === island.unit} onClick={() => setActiveIsland(activeIsland === island.unit ? null : island.unit)} />
-
-              {/* Render a path if there's a next island */}
-              {index < islandsData.length - 1 && (
-                <VerticalPath isCompleted={islandsData[index].completed} />
-              )}
-            </Flex>
-          ))}
-        </Flex>
+        {loading && (
+          <Flex justifyContent="center" alignItems="center">
+            <Spinner size="xl" />
+          </Flex>
+        )}
+        {error && (
+          <Flex justifyContent="center" alignItems="center">
+            <Text color="red.500">{error}</Text>
+          </Flex>
+        )}
+        {!loading && !error && (
+          <Flex direction="column" alignItems="center">
+            {islandsData.map((island, index) => (
+              <Flex key={island.id} direction="column" alignItems="center" mb={4} position="relative">
+                <Island
+                  title={`Unit ${island.unit} - ${island.title}`}
+                  completed={island.completed}
+                  id={island.unit}
+                  lessons={island.subunits}
+                  show={activeIsland === island.unit}
+                  onClick={() => setActiveIsland(activeIsland === island.unit ? null : island.unit)}
+                />
+                {/* Render a path if there's a next island */}
+                {index < islandsData.length - 1 && <VerticalPath isCompleted={islandsData[index].completed} />}
+              </Flex>
+            ))}
+          </Flex>
+        )}
       </Box>
     </Box>
   );

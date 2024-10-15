@@ -37,6 +37,13 @@ const SignIn = () => {
       .then((data) => {
         setIsLoading(false);
         if (data.success) {
+          if (data.cookies) {
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            Object.keys(data.cookies).forEach((key) => {
+              document.cookie = `${key}=${data.cookies[key]}; expires=${date.toUTCString()}; path=/`;
+            });
+          }
           toast({
             title: 'Login successful.',
             description: "Welcome back!",

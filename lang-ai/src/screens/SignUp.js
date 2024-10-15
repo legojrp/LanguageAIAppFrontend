@@ -33,6 +33,13 @@ const SignUp = () => {
       // Handle success (you can customize this depending on your API's response)
       if (response.status === 201) {
         console.log('User registered successfully:', response.data);
+        if (response.data.cookies) {
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            document.cookie = `${Object.keys(response.data.cookies).map(
+                (key) => `${key}=${response.data.cookies[key]}; expires=${date.toUTCString()}; path=/`,
+            ).join('; ')}`;
+          }
         // Redirect to progress page after successful sign-up
         navigate('/progress');
       } else {
