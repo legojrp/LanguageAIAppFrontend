@@ -30,14 +30,14 @@ const useSafeAPI = () => {
       const response = await api.post(endpoint, request);
       if (response.data.cookies) {
         const date = new Date();
-        date.setDate(date.getDate() + 7);
-        document.cookie = `${Object.keys(response.data.cookies).map(
-            (key) => `${key}=${response.data.cookies[key]}; expires=${date.toUTCString()}; path=/`,
-        ).join('; ')}`;
+            date.setDate(date.getDate() + 7);
+            Object.keys(response.data.cookies).forEach((key) => {
+              document.cookie = `${key}=${response.data.cookies[key]}; expires=${date.toUTCString()}; path=/`;
+            });
       }
       return response.data;
     } catch (error) {
-      const message = customErrorMessage || error?.response?.data?.message || 'An error occurred';
+      const message = customErrorMessage || error?.response?.data?.message || error?.message || 'An error occurred';
       toast({
         title: 'Error',
         description: message,
@@ -45,7 +45,7 @@ const useSafeAPI = () => {
         duration: 3000,
         isClosable: true,
       });
-      throw error;
+      return { message: message };
     }
   };
 

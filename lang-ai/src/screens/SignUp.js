@@ -36,9 +36,9 @@ const SignUp = () => {
         if (response.data.cookies) {
             const date = new Date();
             date.setDate(date.getDate() + 7);
-            document.cookie = `${Object.keys(response.data.cookies).map(
-                (key) => `${key}=${response.data.cookies[key]}; expires=${date.toUTCString()}; path=/`,
-            ).join('; ')}`;
+            Object.keys(response.data.cookies).forEach((key) => {
+              document.cookie = `${key}=${response.data.cookies[key]}; expires=${date.toUTCString()}; path=/`;
+            });
           }
         // Redirect to progress page after successful sign-up
         navigate('/progress');

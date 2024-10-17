@@ -5,6 +5,7 @@ import SignIn from './screens/SignIn';
 import SignUp from './screens/SignUp';
 import { Box } from '@chakra-ui/react';
 import Progress from './screens/Progress';
+import CreateSyllabus from './screens/CreateSyllabus';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/progress" element={<Progress />} />
+          <Route path="/progress/create-syllabus" element={<CreateSyllabus />} />
 
         </Routes>
       </Box>
