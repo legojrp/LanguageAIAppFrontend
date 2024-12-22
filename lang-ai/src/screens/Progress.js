@@ -1,23 +1,25 @@
 // src/screens/Progress.js
 import React, { useState, useEffect } from 'react';
-import { Box, Heading, Flex, Select, Collapse, Spinner, Text } from '@chakra-ui/react';
+import { Box, Heading, Flex, Select, Collapse, Spinner, Text, Button } from '@chakra-ui/react';
 import useSafeAPI from '../components/fetch';
 import { Route } from 'react-router-dom';
+import theme  from '../theme';
 
 // Top bar with language switcher
 const TopBar = ({ selectedLanguage, setSelectedLanguage, syllabi }) => {
   return (
-    <Flex bg="teal.500" p={4} justify="space-between" alignItems="center" color="white">
+    <Flex bg={theme.colors.primary[500]} p={4} justify="space-between" alignItems="center" color="white">
       <Heading as="h3" size="lg">
         Language Progress
       </Heading>
       <Select
-        bg="white"
-        color="black"
+        bg={theme.colors.white}
+        color={theme.colors.black}
         maxWidth="300px"
         value={selectedLanguage}
         onChange={(e) => setSelectedLanguage(e.target.value)}
       >
+
         {syllabi.map((syllabus) => (
           <option key={syllabus.name} value={syllabus.name}>
             {syllabus.name} - {syllabus.language}
@@ -25,17 +27,28 @@ const TopBar = ({ selectedLanguage, setSelectedLanguage, syllabi }) => {
         ))}
         {/* Add more languages as needed */}
       </Select>
+        <Button
+          onClick={() => {
+            window.location.href = "/progress/create-syllabus";
+          }}
+          variant="ghost"
+          colorScheme={theme.colors.primary[500]}
+          size="sm"
+          p={2}
+        >
+          +
+        </Button>
     </Flex>
   );
 };
 
 // Island component
-const Island = ({ title, completed, id, lessons = [], show = true, onClick }) => {
+const Island = ({ title, completed, id, lessons = [], show = true, onClick, onClickLesson }) => {
   return (
     <Flex direction="column" alignItems="center" mb={4} position="relative">
       <Box
         onClick={onClick}
-        bg={completed ? 'green.400' : 'gray.300'}
+        bg={completed ? theme.colors.green[400] : theme.colors.gray[300]}
         borderRadius="md"
         p={6}
         textAlign="center"
@@ -60,7 +73,7 @@ const Island = ({ title, completed, id, lessons = [], show = true, onClick }) =>
           <Flex key={id} direction="column" alignItems="flex-start" mb={4} position="relative">
             {show &&
               lessons.map((lesson) => (
-                <Box key={lesson.lesson} bg={lesson.completed ? 'green.200' : 'gray.200'} p={2} mt={2}>
+                <Box key={lesson.type} bg={lesson.completed ? theme.colors.green[200] : theme.colors.gray[200]} p={2} mt={2} onClick={() => onClickLesson(id, lesson)}>
                   {`${lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)} ${lesson.subunit} - ${lesson.topic}`}
                 </Box>
               ))}
@@ -76,7 +89,7 @@ const VerticalPath = ({ isCompleted, height }) => (
   <Box
     width="4px"
     height={height || '80px'}
-    bg={isCompleted ? 'green.400' : 'gray.300'}
+    bg={isCompleted ? theme.colors.green[400] : theme.colors.gray[300]}
     borderRadius="md"
     margin="0 auto" // Center the path between islands
   />
@@ -89,6 +102,7 @@ const Progress = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [syllabi, setSyllabi] = useState([]);
+  const [syllabusID, setSyllabusID] = useState(null);
 
 
   const safeAPI = useSafeAPI();
@@ -102,12 +116,11 @@ const Progress = () => {
       window.location.href = "/progress/create-syllabus/";
       }
       setIslandsData(JSON.parse(response).syllabus ?? []);
+      setSyllabusID(JSON.parse(response)._id.$oid ?? null);
     } catch (error) {
       console.error('Failed to fetch syllabus:', error);
     }
   };
-
-  
 
   const handleSelectSyllabus = async (id) => {
     try {
@@ -119,8 +132,12 @@ const Progress = () => {
       console.error('Failed to fetch syllabus:', error)
       setSyllabi([{name:"Unable to get syllabi", language:"None"}]);
     } 
-    }
+  }
 
+  const onClickLesson = (id, lesson) => {
+    console.log(id, lesson);
+    window.location.href = `/learn/${syllabusID}/${id}/${lesson.subunit}`
+  }
   useEffect(() => {
     handleSyllabusRequest();
   }, [selectedLanguage]);
@@ -162,6 +179,7 @@ const Progress = () => {
                   lessons={island.subunits}
                   show={activeIsland === island.unit}
                   onClick={() => setActiveIsland(activeIsland === island.unit ? null : island.unit)}
+                  onClickLesson={onClickLesson}
                 />
                 {/* Render a path if there's a next island */}
                 {index < islandsData.length - 1 && <VerticalPath isCompleted={islandsData[index].completed} />}
@@ -175,3 +193,4 @@ const Progress = () => {
 };
 
 export default Progress;
+
